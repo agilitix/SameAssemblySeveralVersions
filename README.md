@@ -1,3 +1,4 @@
+
 # SameAssemblySeveralVersions
 
 This project shows how to use the same assembly in different versions (here the log4net 1.2.10, 1.2.14.0, 2.0.8.0)
