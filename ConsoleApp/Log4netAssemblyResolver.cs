@@ -19,9 +19,12 @@ namespace ConsoleApp
 
             foreach (string file in log4netAssemblies)
             {
+                // Load log4net assembly inside current domain.
                 Assembly log4netAssembly = Assembly.LoadFile(file);
                 _log4netAssemblies[log4netAssembly.FullName] = log4netAssembly;
 
+                // Setup log4net with given config file:
+                // XmlConfigurator.Configure(new FileInfo(configFile));
                 Type xmlConfigurator = log4netAssembly.GetType("log4net.Config.XmlConfigurator");
                 MethodInfo configureMethod = xmlConfigurator.GetMethod("Configure", new[] {typeof(FileInfo)});
                 configureMethod?.Invoke(null, new object[] {new FileInfo(configFile)});
@@ -31,7 +34,17 @@ namespace ConsoleApp
         private Assembly CurrentDomainAssemblyResolver(object sender, ResolveEventArgs args)
         {
             Assembly resolved;
-            _log4netAssemblies.TryGetValue(args.RequestingAssembly?.FullName ?? args.Name, out resolved);
+
+            if (_log4netAssemblies.TryGetValue(args.Name, out resolved))
+            {
+                return resolved;
+            }
+
+            if (!string.IsNullOrEmpty(args.RequestingAssembly?.FullName))
+            {
+                _log4netAssemblies.TryGetValue(args.RequestingAssembly?.FullName, out resolved);
+            }
+
             return resolved;
         }
 

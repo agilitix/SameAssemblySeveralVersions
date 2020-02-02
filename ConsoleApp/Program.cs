@@ -12,7 +12,7 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            // This executable path.
+            // This executable directory.
             string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
             // Pre-load and resolve several log4net versions. The config file must be compatible with all versions.
@@ -24,6 +24,7 @@ namespace ConsoleApp
                                                                                   },
                                                                                   "log4net.config");
 
+            // Create some classes doing logs, each one depends on a particular version of log4net.
             Class1 cl1 = new Class1();
             Class2 cl2 = new Class2();
             Class3 cl3 = new Class3();
