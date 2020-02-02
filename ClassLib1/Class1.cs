@@ -16,8 +16,7 @@ namespace ClassLib1
 
         public Class1()
         {
-            XmlConfigurator.Configure(new FileInfo("log4net1.config"));
-            _logger.Info(nameof(Class1));
+            _logger.Info(nameof(Class1) + " " + _logger.GetType().Assembly.FullName);
         }
     }
 }

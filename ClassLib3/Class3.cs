@@ -16,8 +16,7 @@ namespace ClassLib3
 
         public Class3()
         {
-            XmlConfigurator.Configure(new FileInfo("log4net3.config"));
-            _logger.Info(nameof(Class3));
+            _logger.Info(nameof(Class3) + " " + _logger.GetType().Assembly.FullName);
         }
     }
 }
