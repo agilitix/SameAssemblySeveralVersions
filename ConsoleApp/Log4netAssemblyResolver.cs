@@ -6,8 +6,8 @@ using System.Reflection;
 namespace ConsoleApp
 {
     /// <summary>
-    /// This class can load and return several versions of log4net (mixing 1.2.10 and newer versions is allowed)
-    /// when requested by the AppDomain resolver.
+    /// This class can load and return several versions of log4net when requested by the AppDomain resolver
+    /// (mixing 1.2.10 and newer versions is allowed).
     /// </summary>
     public class Log4netAssemblyResolver : IDisposable
     {
@@ -30,15 +30,9 @@ namespace ConsoleApp
 
         private Assembly CurrentDomainAssemblyResolver(object sender, ResolveEventArgs args)
         {
-            string log4netFullName = args.RequestingAssembly?.FullName ?? args.Name;
-
             Assembly resolved;
-            if (_log4netAssemblies.TryGetValue(log4netFullName, out resolved))
-            {
-                return resolved;
-            }
-
-            return null;
+            _log4netAssemblies.TryGetValue(args.RequestingAssembly?.FullName ?? args.Name, out resolved);
+            return resolved;
         }
 
         public void Dispose()
