@@ -45,7 +45,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Log4netAssemblyResolver.cs" />
+    <Compile Include="Log4netResolver.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

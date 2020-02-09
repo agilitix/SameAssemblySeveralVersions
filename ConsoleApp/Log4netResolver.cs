@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace ConsoleApp
@@ -9,11 +11,22 @@ namespace ConsoleApp
     /// This class can load and return several versions of log4net when requested by the AppDomain resolver
     /// (mixing 1.2.10 and newer versions is allowed).
     /// </summary>
-    public class Log4netAssemblyResolver : IDisposable
+    public class Log4netResolver : IDisposable
     {
         private readonly IDictionary<string, Assembly> _log4netAssemblies = new Dictionary<string, Assembly>();
 
-        public Log4netAssemblyResolver(string[] log4netAssemblies, string configFile)
+        public Log4netResolver(string[] log4netAssemblies, string configFile = "log4net.config")
+        {
+            LoadLog4netAssemblies(log4netAssemblies, configFile);
+        }
+
+        public Log4netResolver(string configFile = "log4net.config")
+        {
+            string[] log4netAssemblies = GetLog4netAssemblies();
+            LoadLog4netAssemblies(log4netAssemblies, configFile);
+        }
+
+        private void LoadLog4netAssemblies(string[] log4netAssemblies, string configFile)
         {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainAssemblyResolver;
 
@@ -29,6 +42,19 @@ namespace ConsoleApp
                 MethodInfo configureMethod = xmlConfigurator.GetMethod("Configure", new[] {typeof(FileInfo)});
                 configureMethod?.Invoke(null, new object[] {new FileInfo(configFile)});
             }
+        }
+
+        /// <summary>
+        /// Find log4net assemblies recursively from executable folder, the files are filtered by version.
+        /// </summary>
+        private string[] GetLog4netAssemblies()
+        {
+            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string[] log4netAssemblies = Directory.GetFiles(path, "log4net.dll", SearchOption.AllDirectories)
+                                                  .GroupBy(x => FileVersionInfo.GetVersionInfo(x).FileVersion)
+                                                  .Select(x => x.FirstOrDefault())
+                                                  .ToArray();
+            return log4netAssemblies;
         }
 
         private Assembly CurrentDomainAssemblyResolver(object sender, ResolveEventArgs args)
