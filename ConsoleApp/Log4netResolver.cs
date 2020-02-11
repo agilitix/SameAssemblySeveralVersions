@@ -13,34 +13,44 @@ namespace ConsoleApp
     /// </summary>
     public class Log4netResolver : IDisposable
     {
-        private readonly IDictionary<string, Assembly> _log4netAssemblies = new Dictionary<string, Assembly>();
+        private readonly IDictionary<string /*full name*/, Assembly> _log4netAssemblies = new Dictionary<string, Assembly>();
 
-        public Log4netResolver(string[] log4netAssemblies, string configFile = "log4net.config")
-        {
-            LoadLog4netAssemblies(log4netAssemblies, configFile);
-        }
-
-        public Log4netResolver(string configFile = "log4net.config")
-        {
-            string[] log4netAssemblies = GetLog4netAssemblies();
-            LoadLog4netAssemblies(log4netAssemblies, configFile);
-        }
-
-        private void LoadLog4netAssemblies(string[] log4netAssemblies, string configFile)
+        public Log4netResolver(string[] log4netAssemblies = null)
         {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainAssemblyResolver;
 
-            foreach (string file in log4netAssemblies)
-            {
-                // Load log4net assembly inside current domain.
-                Assembly log4netAssembly = Assembly.LoadFile(file);
-                _log4netAssemblies[log4netAssembly.FullName] = log4netAssembly;
+            LoadLog4netAssemblies(log4netAssemblies ?? GetLog4netAssemblies());
+        }
 
+        public void Configure(string configFile)
+        {
+            foreach (Assembly log4netAssembly in _log4netAssemblies.Values)
+            {
                 // Setup log4net with given config file:
                 // XmlConfigurator.Configure(new FileInfo(configFile));
                 Type xmlConfigurator = log4netAssembly.GetType("log4net.Config.XmlConfigurator");
                 MethodInfo configureMethod = xmlConfigurator.GetMethod("Configure", new[] {typeof(FileInfo)});
                 configureMethod?.Invoke(null, new object[] {new FileInfo(configFile)});
+            }
+        }
+
+        public Version[] GetVersions()
+        {
+            return _log4netAssemblies.Select(x => x.Value.GetName().Version).ToArray();
+        }
+
+        public AssemblyName[] GetNames()
+        {
+            return _log4netAssemblies.Select(x => x.Value.GetName()).ToArray();
+        }
+
+        private void LoadLog4netAssemblies(string[] log4netAssemblies)
+        {
+            foreach (string file in log4netAssemblies)
+            {
+                // Load log4net assembly inside current domain.
+                Assembly log4netAssembly = Assembly.LoadFile(file);
+                _log4netAssemblies[log4netAssembly.FullName] = log4netAssembly;
             }
         }
 
@@ -61,14 +71,9 @@ namespace ConsoleApp
         {
             Assembly resolved;
 
-            if (_log4netAssemblies.TryGetValue(args.Name, out resolved))
+            if (!_log4netAssemblies.TryGetValue(args.Name, out resolved))
             {
-                return resolved;
-            }
-
-            if (!string.IsNullOrEmpty(args.RequestingAssembly?.FullName))
-            {
-                _log4netAssemblies.TryGetValue(args.RequestingAssembly?.FullName, out resolved);
+                _log4netAssemblies.TryGetValue(args.RequestingAssembly?.FullName ?? "", out resolved);
             }
 
             return resolved;
